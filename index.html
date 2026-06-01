@@ -2,61 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#121212">
-    <link rel="icon" type="image/png" sizes="192x192" href="SMARTART.png">
-    <link rel="apple-touch-icon" href="SMARTART.png">
-    <link rel="manifest" href="./manifest.json">
-    
-    <title>DREAMER</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>STUDIO</title>
     <style>
         :root {
-            --bg: #050505;
-            --panel: rgba(15, 15, 15, 0.95);
-            --border: #333;
-            --neon: #00ffff; 
-            --active-bg: rgba(0, 255, 255, 0.1);
+            --bg: #050505; --panel: rgba(15, 15, 15, 0.95); --border: #333;
+            --neon: #00ffff; --active-bg: rgba(0, 255, 255, 0.1);
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; touch-action: none; font-family: monospace; }
-        
         body { background: var(--bg); height: 100vh; width: 100vw; overflow: hidden; color: #666; }
-
-        /* CANVASES */
         #viewport { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: 0 0; }
         canvas { position: absolute; top: 0; left: 0; display: block; }
         #temp-canvas { z-index: 20; }
-
-        /* THE BOTTOM DOCK */
         .dock {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 96%; max-width: 500px;
             display: flex; justify-content: space-between; background: var(--panel); padding: 10px;
             border-radius: 40px; border: 1px solid var(--border); z-index: 9999;
         }
-
         .dock-btn {
             flex: 1; height: 50px; margin: 0 4px; border-radius: 25px; border: 1px solid var(--border);
             background: #111; display: flex; align-items: center; justify-content: center;
             color: #888; font-size: 11px; font-weight: 900; transition: 0.2s; cursor: pointer;
         }
-
         .active-btn { border-color: var(--neon) !important; color: var(--neon) !important; background: var(--active-bg); box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); }
-
-        /* DROP-UP LADDERS */
         .ladder {
             position: fixed; right: 15px; bottom: 100px; display: none; flex-direction: column; gap: 8px;
             z-index: 9998; width: 90px; max-height: 70vh; overflow-y: auto; padding-right: 5px;
         }
         .ladder::-webkit-scrollbar { display: none; }
-
         .ladder-btn {
             width: 100%; min-height: 50px; background: var(--panel); border: 1px solid var(--border);
             border-radius: 12px; display: flex; align-items: center; justify-content: center;
             color: #aaa; font-size: 10px; font-weight: bold; cursor: pointer; text-align: center;
         }
-
-        /* COLOR MENU SPECIFICS */
         #ladder-color { width: 150px; background: var(--panel); padding: 15px; border-radius: 20px; border: 1px solid var(--border); }
         .slider-label { font-size: 10px; color: #888; margin-top: 10px; margin-bottom: 5px; }
         input[type="range"] { width: 100%; margin-bottom: 10px; }
@@ -70,7 +48,6 @@
         <canvas id="temp-canvas"></canvas>
     </div>
 
-    <!-- DROP-UP: MENU -->
     <div id="ladder-menu" class="ladder">
         <div class="ladder-btn" onclick="loadFile('load')">LOAD</div>
         <div class="ladder-btn" onclick="loadFile('import')">IMPORT</div>
@@ -78,26 +55,17 @@
         <div class="ladder-btn" onclick="alert('Vaults coming soon!')">VAULTS</div>
     </div>
 
-    <!-- DROP-UP: COLOR & BRUSH -->
     <div id="ladder-color" class="ladder">
         <div style="width:100%; display:flex; justify-content:center; margin-bottom:10px;">
             <canvas id="brush-preview" width="60" height="60" style="border-radius:50%; border:2px solid #fff;"></canvas>
         </div>
-        
         <div class="slider-label" style="text-align:center; color:var(--neon);" id="color-hex-label">#00ffff</div>
         <input type="color" id="native-color" value="#00ffff">
-        
-        <div class="slider-label">BRUSH SIZE</div>
-        <input type="range" id="slider-size" min="1" max="100" value="20">
-        
-        <div class="slider-label">DARK TO LIGHT</div>
-        <input type="range" id="slider-lightness" min="-50" max="50" value="0">
-        
-        <div class="slider-label">GLOW</div>
-        <input type="range" id="slider-glow" min="0" max="50" value="0">
+        <div class="slider-label">BRUSH SIZE</div><input type="range" id="slider-size" min="1" max="100" value="20">
+        <div class="slider-label">DARK TO LIGHT</div><input type="range" id="slider-lightness" min="-50" max="50" value="0">
+        <div class="slider-label">GLOW</div><input type="range" id="slider-glow" min="0" max="50" value="0">
     </div>
 
-    <!-- DROP-UP: TOOLS -->
     <div id="ladder-tools" class="ladder">
         <div class="ladder-btn tool-btn active-btn" id="tool-brush" onclick="activateTool(this, 'PAINTBRUSH')">BRUSH</div>
         <div class="ladder-btn tool-btn" onclick="activateTool(this, 'ERASER')">ERASER</div>
@@ -111,7 +79,6 @@
         <div class="ladder-btn tool-btn" onclick="triggerAI()" style="border-color:#ff00ff; color:#ff00ff;">AI</div>
     </div>
 
-    <!-- BOTTOM DOCK -->
     <div class="dock">
         <div class="dock-btn" id="dock-menu" onclick="toggleLadder('menu')">MENU</div>
         <div class="dock-btn active-btn" id="dock-edit" onclick="toggleEdit()">EDIT</div>
@@ -121,9 +88,8 @@
     </div>
 
     <script>
-        // --- UI & STATE MANAGEMENT ---
         let currentlyOpenLadder = null;
-        let isEditMode = true; // Starts on by default
+        let isEditMode = true; 
         
         const app = {
             activeTool: 'PAINTBRUSH',
@@ -131,8 +97,7 @@
             penColor: localStorage.getItem('saved_pen_color') || '#00ffff',
             penSize: localStorage.getItem('saved_size') || 20,
             glow: localStorage.getItem('saved_glow') || 0,
-            panX: 0, panY: 0, scale: 1,
-            undo: []
+            panX: 0, panY: 0, scale: 1, undo: []
         };
 
         const $ = id => document.getElementById(id);
@@ -165,22 +130,17 @@
                 currentlyOpenLadder = null;
                 return;
             }
-
             $('ladder-' + ladderName).style.display = 'flex';
             currentlyOpenLadder = ladderName;
-
             if (ladderName !== 'color') $('dock-' + ladderName).classList.add('active-btn');
         }
 
-        // --- ZEN MODE EDIT BUTTON ---
         function toggleEdit() {
             isEditMode = !isEditMode;
             const editBtn = $('dock-edit');
             
             if (isEditMode) {
                 editBtn.classList.add('active-btn');
-                
-                // Zen Mode: Close all ladders instantly
                 $('ladder-menu').style.display = 'none';
                 $('ladder-tools').style.display = 'none';
                 $('ladder-color').style.display = 'none';
@@ -188,15 +148,12 @@
                 $('dock-tools').classList.remove('active-btn');
                 currentlyOpenLadder = null;
 
-                // Force paintbrush mode if we had a non-drawing tool active
                 if(app.activeTool !== 'PAINTBRUSH' && app.activeTool !== 'ERASER') {
                     app.activeTool = 'PAINTBRUSH';
                     document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active-btn'));
                     $('tool-brush').classList.add('active-btn');
                 }
-            } else {
-                editBtn.classList.remove('active-btn');
-            }
+            } else { editBtn.classList.remove('active-btn'); }
         }
 
         function activateTool(element, toolName) {
@@ -208,9 +165,9 @@
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active-btn'));
             element.classList.add('active-btn');
             app.activeTool = toolName;
+            if(!isEditMode) { isEditMode = true; $('dock-edit').classList.add('active-btn'); }
         }
 
-        // --- COLOR SYSTEM & PREVIEW ---
         function updateColorFromSliders() {
             app.penSize = parseInt($('slider-size').value);
             app.glow = parseInt($('slider-glow').value);
@@ -223,7 +180,6 @@
             localStorage.setItem('saved_pen_color', app.penColor);
             localStorage.setItem('saved_size', app.penSize);
             localStorage.setItem('saved_glow', app.glow);
-
             applyColorToUI();
         }
 
@@ -235,15 +191,10 @@
             document.documentElement.style.setProperty('--neon', app.penColor);
             $('color-hex-label').innerText = app.baseHex.toUpperCase();
 
-            // Draw the brush preview circle
             const pCtx = $('brush-preview').getContext('2d');
-            pCtx.clearRect(0, 0, 60, 60);
-            pCtx.beginPath();
+            pCtx.clearRect(0, 0, 60, 60); pCtx.beginPath();
             pCtx.arc(30, 30, Math.min(app.penSize, 60) / 2, 0, Math.PI*2);
-            pCtx.fillStyle = app.penColor;
-            pCtx.shadowColor = app.penColor;
-            pCtx.shadowBlur = app.glow;
-            pCtx.fill();
+            pCtx.fillStyle = app.penColor; pCtx.shadowColor = app.penColor; pCtx.shadowBlur = app.glow; pCtx.fill();
         }
 
         $('native-color').oninput = updateColorFromSliders;
@@ -262,14 +213,12 @@
 
         viewport.addEventListener('touchstart', e => {
             const c = getC(e);
-            
             if (e.touches.length === 2) {
                 isDraw = false; isPan = false;
                 dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                 px = (e.touches[0].clientX + e.touches[1].clientX) / 2; py = (e.touches[0].clientY + e.touches[1].clientY) / 2;
                 return;
             }
-
             if (e.touches.length === 1) {
                 if (isEditMode) {
                     isDraw = true; lx = c.x; ly = c.y;
@@ -278,8 +227,7 @@
                         const p = mctx.getImageData(c.x, c.y, 1, 1).data;
                         if(p[3] > 0) {
                             const hex = "#" + ((1 << 24) + (p[0] << 16) + (p[1] << 8) + p[2]).toString(16).slice(1);
-                            $('native-color').value = hex;
-                            $('slider-lightness').value = 0; 
+                            $('native-color').value = hex; $('slider-lightness').value = 0; 
                             updateColorFromSliders();
                         }
                         isDraw = false; 
@@ -325,7 +273,7 @@
                     tctx.clearRect(0, 0, temp.width, temp.height);
                     tctx.strokeStyle = '#0ff'; tctx.setLineDash([5,5]); tctx.lineWidth = 2 / app.scale;
                     tctx.strokeRect(window.dx, window.dy, c.x - window.dx, c.y - window.dy); tctx.setLineDash([]);
-                }
+                } 
                 else if (app.activeTool === 'PASTE' && window.clipboard) {
                     tctx.clearRect(0, 0, temp.width, temp.height);
                     if (app.undo.length > 0) { const p = new Image(); p.src = app.undo[app.undo.length-1].d; tctx.drawImage(p, 0, 0); }
@@ -334,17 +282,10 @@
                     tctx.drawImage(pCanv, c.x, c.y);     
                 }
                 else if (app.activeTool === 'PAINTBRUSH' || app.activeTool === 'ERASER') {
-                    tctx.lineCap = 'round'; 
-                    
-                    // THIS IS THE DYNAMIC SCALING MATH!
-                    tctx.lineWidth = app.penSize / app.scale;
-                    
-                    tctx.shadowBlur = app.glow / app.scale;
-                    tctx.shadowColor = app.glow > 0 ? app.penColor : 'transparent';
-                    
+                    tctx.lineCap = 'round'; tctx.lineWidth = app.penSize / app.scale;
+                    tctx.shadowBlur = app.glow / app.scale; tctx.shadowColor = app.glow > 0 ? app.penColor : 'transparent';
                     if (app.activeTool === 'ERASER') { tctx.globalCompositeOperation = 'destination-out'; tctx.shadowBlur = 0; } 
                     else { tctx.globalCompositeOperation = 'source-over'; tctx.strokeStyle = app.penColor; }
-
                     tctx.beginPath(); tctx.moveTo(lx, ly); tctx.lineTo(c.x, c.y); tctx.stroke(); lx = c.x; ly = c.y;
                 }
             }
@@ -362,16 +303,18 @@
                         alert("Copied!");
                     }
                     app.activeTool = null;
-                        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active-btn'));}
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active-btn'));
                 } 
-                }
                 else if (app.activeTool === 'PASTE' && window.clipboard) {
                     const c = getC(e.changedTouches[0]);
+                    tctx.clearRect(0, 0, temp.width, temp.height);
+                    if (app.undo.length > 0) { const p = new Image(); p.src = app.undo[app.undo.length-1].d; tctx.drawImage(p, 0, 0); }
                     const pCanv = document.createElement('canvas'); pCanv.width = window.clipboard.width; pCanv.height = window.clipboard.height;
                     pCanv.getContext('2d').putImageData(window.clipboard, 0, 0);
                     tctx.drawImage(pCanv, c.x, c.y); pushUndo('paste');
                 }
                 else if (app.activeTool === 'PAINTBRUSH' || app.activeTool === 'ERASER') { pushUndo('stroke'); }
+            }
             isPan = false;
         });
 
@@ -409,8 +352,7 @@
                     img.src = ev.target.result;
                 };
                 reader.readAsDataURL(file);
-                
-                };
+            };
             inp.click();
         }
 
@@ -419,64 +361,6 @@
             if(app.undo.length <= 1) return; app.undo.pop(); 
             const p = app.undo[app.undo.length-1]; const tImg = new Image(); 
             tImg.onload = () => { tctx.clearRect(0, 0, temp.width, temp.height); tctx.drawImage(tImg, 0, 0); }; tImg.src = p.d;
-        }
-             // --- PAINT BUCKET (FLOOD FILL) ---
-        function floodFill(x, y, targetColorStr) {
-            const w = temp.width, h = temp.height;
-            x = Math.floor(x); y = Math.floor(y);
-            if (x < 0 || x >= w || y < 0 || y >= h) return;
-
-            // 1. Get the exact math values of your current pen color
-            const hc = document.createElement('canvas'); hc.width = 1; hc.height = 1;
-            const hctx = hc.getContext('2d');
-            hctx.fillStyle = targetColorStr; hctx.fillRect(0, 0, 1, 1);
-            const fRgba = hctx.getImageData(0, 0, 1, 1).data;
-
-            // 2. Take a hidden snapshot of BOTH layers so the fill respects imported images
-            const comp = document.createElement('canvas'); comp.width = w; comp.height = h;
-            const cctx = comp.getContext('2d');
-            cctx.drawImage(main, 0, 0); cctx.drawImage(temp, 0, 0);
-            const cData = cctx.getImageData(0, 0, w, h).data;
-
-            // 3. Target your active drawing layer where the paint will actually go
-            const tImg = tctx.getImageData(0, 0, w, h);
-            const tData = tImg.data;
-
-            const startPos = (y * w + x) * 4;
-            const sR = cData[startPos], sG = cData[startPos+1], sB = cData[startPos+2], sA = cData[startPos+3];
-
-            // Stop if you tap the exact same color (prevents freezing)
-            if (fRgba[0] === sR && fRgba[1] === sG && fRgba[2] === sB && fRgba[3] === sA) return;
-
-            const match = p => cData[p] === sR && cData[p+1] === sG && cData[p+2] === sB && cData[p+3] === sA;
-            const set = p => { 
-                tData[p] = fRgba[0]; tData[p+1] = fRgba[1]; tData[p+2] = fRgba[2]; tData[p+3] = fRgba[3]; 
-                cData[p] = fRgba[0]; cData[p+1] = fRgba[1]; cData[p+2] = fRgba[2]; cData[p+3] = fRgba[3];
-            };
-
-            // Calculate how far the paint spills
-            const stack = [[x, y]];
-            while (stack.length > 0) {
-                let [cx, cy] = stack.pop();
-                let p = (cy * w + cx) * 4;
-                while (cy >= 0 && match(p)) { cy--; p -= w * 4; }
-                cy++; p += w * 4;
-                let reachL = false, reachR = false;
-                while (cy < h && match(p)) {
-                    set(p);
-                    if (cx > 0) {
-                        if (match(p - 4)) { if (!reachL) { stack.push([cx - 1, cy]); reachL = true; } } 
-                        else if (reachL) reachL = false;
-                    }
-                    if (cx < w - 1) {
-                        if (match(p + 4)) { if (!reachR) { stack.push([cx + 1, cy]); reachR = true; } } 
-                        else if (reachR) reachR = false;
-                    }
-                    cy++; p += w * 4;
-                }
-            }
-            // Apply the final puddle of paint to the screen
-            tctx.putImageData(tImg, 0, 0);
         }
 
         // --- AI ---
@@ -504,9 +388,43 @@
                 else alert("GEMINI:\n\n" + data.candidates[0].content.parts[0].text);
             } catch (e) { alert("Network Error."); }
             $('dock-tools').innerText = 'TOOLS';
-        } 
+        }
+
+        // --- PAINT BUCKET (FLOOD FILL) ---
+        function floodFill(x, y, targetColorStr) {
+            const w = temp.width, h = temp.height; x = Math.floor(x); y = Math.floor(y);
+            if (x < 0 || x >= w || y < 0 || y >= h) return;
+            const hc = document.createElement('canvas'); hc.width = 1; hc.height = 1;
+            const hctx = hc.getContext('2d'); hctx.fillStyle = targetColorStr; hctx.fillRect(0, 0, 1, 1);
+            const fRgba = hctx.getImageData(0, 0, 1, 1).data;
+            const comp = document.createElement('canvas'); comp.width = w; comp.height = h;
+            const cctx = comp.getContext('2d'); cctx.drawImage(main, 0, 0); cctx.drawImage(temp, 0, 0);
+            const cData = cctx.getImageData(0, 0, w, h).data;
+            const tImg = tctx.getImageData(0, 0, w, h); const tData = tImg.data;
+            const startPos = (y * w + x) * 4;
+            const sR = cData[startPos], sG = cData[startPos+1], sB = cData[startPos+2], sA = cData[startPos+3];
+            if (fRgba[0] === sR && fRgba[1] === sG && fRgba[2] === sB && fRgba[3] === sA) return;
+            const match = p => cData[p] === sR && cData[p+1] === sG && cData[p+2] === sB && cData[p+3] === sA;
+            const set = p => { 
+                tData[p] = fRgba[0]; tData[p+1] = fRgba[1]; tData[p+2] = fRgba[2]; tData[p+3] = fRgba[3]; 
+                cData[p] = fRgba[0]; cData[p+1] = fRgba[1]; cData[p+2] = fRgba[2]; cData[p+3] = fRgba[3];
+            };
+            const stack = [[x, y]];
+            while (stack.length > 0) {
+                let [cx, cy] = stack.pop(); let p = (cy * w + cx) * 4;
+                while (cy >= 0 && match(p)) { cy--; p -= w * 4; }
+                cy++; p += w * 4; let reachL = false, reachR = false;
+                while (cy < h && match(p)) {
+                    set(p);
+                    if (cx > 0) { if (match(p - 4)) { if (!reachL) { stack.push([cx - 1, cy]); reachL = true; } } else if (reachL) reachL = false; }
+                    if (cx < w - 1) { if (match(p + 4)) { if (!reachR) { stack.push([cx + 1, cy]); reachR = true; } } else if (reachR) reachR = false; }
+                    cy++; p += w * 4;
+                }
+            }
+            tctx.putImageData(tImg, 0, 0);
+        }
+
         init();
     </script>
 </body>
 </html>
-                        
