@@ -360,7 +360,8 @@
                         window.clipboard = mctx.getImageData(window.dx, window.dy, w, h); 
                         if (app.activeTool === 'CUT') { mctx.clearRect(window.dx, window.dy, w, h); pushUndo('cut'); } 
                         alert("Copied!");
-                    }app.activeTool = null;
+                    }
+                    app.activeTool = null;
                         document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active-btn'));}
                 } 
                 }
