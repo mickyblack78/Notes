@@ -347,6 +347,7 @@
 
                     tctx.beginPath(); tctx.moveTo(lx, ly); tctx.lineTo(c.x, c.y); tctx.stroke(); lx = c.x; ly = c.y;
                 }
+            }
         }, {passive: false});
 
         window.addEventListener('touchend', e => {
@@ -394,7 +395,7 @@
                             main.style.width = temp.style.width = img.width+'px'; main.style.height = temp.style.height = img.height+'px';
                             app.scale = Math.min(window.innerWidth/img.width, window.innerHeight/img.height) * 0.9;
                             app.panX = (window.innerWidth - img.width * app.scale) / 2; app.panY = (window.innerHeight - img.height * app.scale) / 2;
-viewport.style.transform = `translate(${app.panX}px, ${app.panY}px) scale(${app.scale})`;
+                            viewport.style.transform = `translate(${app.panX}px, ${app.panY}px) scale(${app.scale})`;
                             mctx.clearRect(0, 0, main.width, main.height); mctx.drawImage(img, 0, 0); tctx.clearRect(0, 0, temp.width, temp.height);
                         } else {
                             const rect = temp.getBoundingClientRect();
