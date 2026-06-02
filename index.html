@@ -383,6 +383,15 @@
                     pCanv.getContext('2d').putImageData(window.clipboard, 0, 0);
                     tctx.drawImage(pCanv, c.x, c.y); pushUndo('paste');
                 }
+                    else if (app.activeTool === 'SMOOTH') {
+    tctx.save();
+    tctx.beginPath(); 
+    tctx.arc(c.x, c.y, (app.penSize / app.scale), 0, Math.PI * 2); 
+    tctx.clip();
+    tctx.filter = `blur(${Math.max(1, 4 / app.scale)}px)`;
+    tctx.drawImage(window.smoothBuf, 0, 0);
+    tctx.restore();
+                    }
                 else if (app.activeTool === 'PAINTBRUSH' || app.activeTool === 'ERASER') { pushUndo('stroke'); }
             }
             isPan = false;
