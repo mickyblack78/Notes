@@ -292,11 +292,8 @@
                     else if (app.activeTool === 'FILL') {
                         floodFill(c.x, c.y, app.penColor); pushUndo('fill'); isDraw = false;
                     }
-                    else if (app.activeTool === 'TEXT') {
-                        const txt = prompt("Enter text:");
-                        if (txt) { tctx.font = `${app.penSize * 2}px monospace`; tctx.fillStyle = app.penColor; tctx.fillText(txt, c.x, c.y); pushUndo('text'); }
-                        isDraw = false;
-                    }
+                    else if (app.activeTool === 'TEXT_PLACE') { isDraw = true; lx = c.x; ly = c.y; }
+                    
                     else if (app.activeTool === 'CUT' || app.activeTool === 'COPY') { window.dx = c.x; window.dy = c.y; }
                     else if (app.activeTool === 'PASTE' && window.clipboard) { isDraw = true; }
                 } else {
@@ -311,6 +308,9 @@
 
             if (e.touches.length === 2 && dist > 0) {
                 const nd = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                if (app.activeTool === 'TEXT_PLACE') {
+                    textObj.scale *= (nd / dist); dist = nd; drawTextPreview(); return;
+                }
                 const ns = Math.min(Math.max(0.2, app.scale * (nd / dist)), 150); 
                 app.panX = px - (px - app.panX) * (ns / app.scale); app.panY = py - (py - app.panY) * (ns / app.scale); 
                 app.scale = ns; dist = nd;
