@@ -383,8 +383,20 @@
         function triggerSave() { const l = document.createElement('a'); l.download = 'Studio_Export.png'; mctx.drawImage(temp, 0, 0); l.href = main.toDataURL(); l.click(); }
         function triggerQSave() {
             mctx.drawImage(temp, 0, 0); tctx.clearRect(0, 0, temp.width, temp.height); pushUndo('qsave');
+            if(!app.vaults) { app.vaults = [localStorage.getItem('v0'), localStorage.getItem('v1')]; app.vaultIdx = 0; }
+            app.vaults[app.vaultIdx] = main.toDataURL('image/jpeg', 0.8); 
+            localStorage.setItem('v'+app.vaultIdx, app.vaults[app.vaultIdx]);
+            app.vaultIdx = (app.vaultIdx + 1) % 2;
             const btn = $('dock-qsave'); btn.style.borderColor = '#2e5bff'; btn.style.color = '#2e5bff';
             setTimeout(() => { btn.style.borderColor = ''; btn.style.color = ''; }, 500);
+        }
+
+        function vaultAct(i) {
+            if(!app.vaults) app.vaults = [localStorage.getItem('v0'), localStorage.getItem('v1')];
+            const d = app.vaults[i]; if(!d) return alert("Vault is empty!");
+            const img = new Image(); 
+            img.onload = () => { mctx.clearRect(0,0,main.width,main.height); mctx.drawImage(img,0,0); tctx.clearRect(0,0,temp.width,temp.height); pushUndo('load'); $('ladder-menu').style.display = 'none'; }; 
+            img.src = d;
         }
 
         function loadFile(type) {
