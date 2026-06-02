@@ -8,7 +8,7 @@
     <link rel="apple-touch-icon" href="SMARTART.png">
     <link rel="manifest" href="./manifest.json">
     
-    <title><DREAMER/title>
+    <title><DREAMER</title>
     <style>
         :root {
             --bg: #050505; --panel: rgba(15, 15, 15, 0.95); --border: #333;
@@ -83,7 +83,26 @@
         <div class="ladder-btn tool-btn" onclick="performUndo()">UNDO</div>
         <div class="ladder-btn tool-btn" onclick="triggerAI()" style="border-color:#ff00ff; color:#ff00ff;">AI</div>
     </div>
-
+    <!-- TEXT STICKER UI -->
+    <div id="ui-text" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%); width:90%; max-width:350px; padding:20px; background:rgba(15,15,15,0.98); border:1px solid #333; border-radius:20px; flex-direction:column; z-index:9999;">
+        <input type="text" id="text-input" placeholder="Type here..." style="width:100%; height:40px; margin-bottom:15px; background:#111; color:#fff; border:1px solid #444; padding:10px; font-size:16px;">
+        <div style="color:#888; font-size:10px; margin-bottom:5px;">FONT STYLE</div>
+        <select id="text-font" style="width:100%; height:40px; margin-bottom:15px; background:#111; color:#fff; border:1px solid #444; padding:5px;">
+            <option value="monospace">Typewriter</option>
+            <option value="cursive">Cursive / Script</option>
+            <option value="sans-serif">Clean Bold</option>
+        </select>
+        <div style="color:#888; font-size:10px; margin-bottom:5px;">ROTATION</div>
+        <input type="range" id="text-rotate" min="0" max="360" value="0" style="width:100%; margin-bottom:20px;" oninput="drawTextPreview()">
+        <div style="display:flex; justify-content:space-between; gap:10px;">
+            <div class="dock-btn" onclick="startTextSticker()" style="border-color:#00ffff; color:#00ffff;">PLACE</div>
+            <div class="dock-btn" onclick="cancelTextSticker()">CANCEL</div>
+        </div>
+    </div>
+    
+    <div id="ui-text-confirm" style="display:none; position:fixed; bottom:100px; left:50%; transform:translateX(-50%); z-index:9999;">
+        <div class="dock-btn" onclick="confirmTextSticker()" style="width:150px; background:#00ffff; color:#000; font-weight:bold;">STAMP TEXT</div>
+    </div>
     <div class="dock">
         <div class="dock-btn" id="dock-menu" onclick="toggleLadder('menu')">MENU</div>
         <div class="dock-btn active-btn" id="dock-edit" onclick="toggleEdit()">EDIT</div>
@@ -162,10 +181,10 @@
         }
 
         function activateTool(element, toolName) {
+            if (toolName === 'TEXT') { openTextMenu(); return; }
             if (app.activeTool === toolName) {
                 element.classList.remove('active-btn');
-                app.activeTool = null;
-                return;
+                app.activeTool = null; return;
             }
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active-btn'));
             element.classList.add('active-btn');
@@ -206,7 +225,40 @@
         $('slider-size').oninput = updateColorFromSliders;
         $('slider-lightness').oninput = updateColorFromSliders;
         $('slider-glow').oninput = updateColorFromSliders;
-
+        // --- TEXT STICKER LOGIC ---
+        let textObj = { txt: '', font: '', rot: 0, x: 100, y: 100, scale: 1 };
+        function openTextMenu() {
+            $('ui-text').style.display = 'flex';
+            toggleLadder('none'); // close other menus
+            window.dragBackup = tctx.getImageData(0, 0, temp.width, temp.height);
+        }
+        function startTextSticker() {
+            textObj.txt = $('text-input').value; textObj.font = $('text-font').value; textObj.rot = parseInt($('text-rotate').value);
+            if(!textObj.txt) return cancelTextSticker();
+            $('ui-text').style.display = 'none'; $('ui-text-confirm').style.display = 'block';
+            app.activeTool = 'TEXT_PLACE';
+            textObj.x = temp.width / 2; textObj.y = temp.height / 2; textObj.scale = 1;
+            drawTextPreview();
+        }
+        function cancelTextSticker() {
+            $('ui-text').style.display = 'none'; $('ui-text-confirm').style.display = 'none';
+            app.activeTool = null; document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active-btn'));
+            tctx.putImageData(window.dragBackup, 0, 0);
+        }
+        function drawTextPreview() {
+            if(app.activeTool !== 'TEXT_PLACE') return;
+            textObj.rot = parseInt($('text-rotate').value);
+            tctx.putImageData(window.dragBackup, 0, 0);
+            tctx.save();
+            tctx.translate(textObj.x, textObj.y); tctx.rotate(textObj.rot * Math.PI / 180);
+            tctx.font = `${app.penSize * 2 * textObj.scale}px ${textObj.font}`;
+            tctx.fillStyle = app.penColor; tctx.fillText(textObj.txt, 0, 0);
+            tctx.restore();
+        }
+        function confirmTextSticker() {
+            $('ui-text-confirm').style.display = 'none'; pushUndo('text'); app.activeTool = null;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active-btn'));
+        }
         // --- TOUCH CONTROLS (DYNAMIC SCALING) ---
         let isDraw = false, isPan = false, sx=0, sy=0, dist=0, px=0, py=0, lx=0, ly=0;
         
