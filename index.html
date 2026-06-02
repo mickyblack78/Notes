@@ -297,6 +297,13 @@
                     
                     else if (app.activeTool === 'CUT' || app.activeTool === 'COPY') { window.dx = c.x; window.dy = c.y; }
                     else if (app.activeTool === 'PASTE' && window.clipboard) { isDraw = true; }
+                    else if (app.activeTool === 'SMOOTH') {
+    isDraw = true;
+    window.smoothBuf = document.createElement('canvas');
+    window.smoothBuf.width = main.width; window.smoothBuf.height = main.height;
+    const bctx = window.smoothBuf.getContext('2d');
+    bctx.drawImage(main, 0, 0); bctx.drawImage(temp, 0, 0);
+                    }
                 } else {
                     isPan = true; sx = e.touches[0].clientX - app.panX; sy = e.touches[0].clientY - app.panY;
                 }
