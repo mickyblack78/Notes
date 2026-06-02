@@ -404,7 +404,7 @@
                         } else {
                             const rect = temp.getBoundingClientRect();
                             const cx = (window.innerWidth/2 - rect.left) / app.scale, cy = (window.innerHeight/2 - rect.top) / app.scale;
-                            const r = Math.min((window.innerWidth/app.scale)/img.width, (window.innerHeight/app.scale)/img.height) * 0.8;
+                            const r = Math.min((window.innerWidth/app.scale)/img.width, (window.innerHeight/app.scale)/img.height);
                             tctx.drawImage(img, cx - (img.width*r)/2, cy - (img.height*r)/2, img.width*r, img.height*r);
                         }
                         pushUndo(type); toggleLadder('menu'); 
