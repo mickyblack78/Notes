@@ -335,3 +335,285 @@
             const r = temp.getBoundingClientRect(); 
             return { x: (t.clientX - r.left) / app.scale, y: (t.clientY - r.top) / app.scale }; 
         };
+        // Setup Viewport Transformation Engine
+        function updateViewport() {
+            viewport.style.transform = `translate(${app.panX}px, ${app.panY}px) scale(${app.scale})`;
+        }
+
+        // ==========================================
+        // DYNAMIC FILE LOADER MATRIX (LOAD VS IMPORT)
+        // ==========================================
+        function loadFile(mode) {
+            const input = document.createElement('input');
+            input.type = 'file'; input.accept = 'image/*';
+            input.onchange = e => {
+                const reader = new FileReader();
+                reader.onload = evt => {
+                    const img = new Image();
+                    img.onload = () => {
+                        if (mode === 'load') {
+                            // LOAD: Master Hard-Reset on main canvas
+                            pushUndo('load_file');
+                            main.width = temp.width = img.width;
+                            main.height = temp.height = img.height;
+                            main.style.width = temp.style.width = img.width + 'px';
+                            main.style.height = temp.style.height = img.height + 'px';
+                            
+                            // Center viewport framework
+                            app.scale = Math.min(window.innerWidth / img.width, window.innerHeight / img.height, 1);
+                            app.panX = (window.innerWidth - img.width * app.scale) / 2;
+                            app.panY = (window.innerHeight - img.height * app.scale) / 2;
+                            updateViewport();
+                            
+                            mctx.clearRect(0, 0, main.width, main.height);
+                            tctx.clearRect(0, 0, temp.width, temp.height);
+                            mctx.drawImage(img, 0, 0);
+                        } else if (mode === 'import') {
+                            // IMPORT: Map viewport bounds and stamp strictly inside current view onto scratchpad
+                            pushUndo('import_file');
+                            
+                            // Calculate current visible screen boundaries mapped into canvas coordinates
+                            const left = -app.panX / app.scale;
+                            const top = -app.panY / app.scale;
+                            const width = window.innerWidth / app.scale;
+                            const height = window.innerHeight / app.scale;
+                            
+                            // Draw the asset onto temp-canvas, scaling it exactly to the present screen window
+                            tctx.drawImage(img, left, top, width, height);
+                        }
+                        toggleLadder('none');
+                    };
+                    img.src = evt.target.result;
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            };
+            input.click();
+        }
+
+        // ==========================================
+        // ALTERNATING VAULT CORE & EXPORT
+        // ==========================================
+        function triggerQSave() {
+            // Step 1: Master Layer Fusion - Stamp scratchpad directly down to bottom canvas
+            mctx.drawImage(temp, 0, 0);
+            tctx.clearRect(0, 0, temp.width, temp.height);
+            pushUndo('qsave');
+            
+            // Step 2 & 3: Hardware Data Compression & Storage
+            const imgData = main.toDataURL('image/jpeg', 0.8);
+            app.vaults[app.vaultIdx] = imgData;
+            localStorage.setItem('v' + app.vaultIdx, imgData);
+            updateVaultThumbnails();
+            
+            // Step 4: Alternating Loop Switch Math: (Index + 1) modulo 2
+            app.vaultIdx = (app.vaultIdx + 1) % 2;
+            
+            // Step 5: Visual Confirmation Track
+            const btn = $('dock-qsave');
+            const origColor = btn.style.borderColor; const origText = btn.style.color;
+            btn.style.borderColor = '#2e5bff'; btn.style.color = '#2e5bff';
+            setTimeout(() => { btn.style.borderColor = origColor; btn.style.color = origText; }, 500);
+        }
+
+        function vaultAct(idx) {
+            if (!app.vaults[idx]) return; // Slot is empty, do nothing
+            
+            // Explicitly load the raw vault string straight into the master canvas
+            pushUndo('vault_load');
+            const img = new Image();
+            img.onload = () => {
+                main.width = temp.width = img.width;
+                main.height = temp.height = img.height;
+                main.style.width = temp.style.width = img.width + 'px';
+                main.style.height = temp.style.height = img.height + 'px';
+                mctx.clearRect(0, 0, main.width, main.height);
+                tctx.clearRect(0, 0, temp.width, temp.height);
+                mctx.drawImage(img, 0, 0);
+            };
+            img.src = app.vaults[idx];
+            toggleLadder('none');
+        }
+
+        function triggerSave() {
+            // Trigger permanent hardware download link direct to local storage Download folder
+            const link = document.createElement('a');
+            link.download = 'STUDIO69_' + Date.now() + '.png';
+            link.href = main.toDataURL('image/png');
+            link.click();
+        }
+
+        // ==========================================
+        // TOUCH INTERACTION MATRICES
+        // ==========================================
+        window.addEventListener('touchstart', e => {
+            if (e.touches.length === 1 && app.activeTool === 'TEXT_PLACE') {
+                const pos = getC(e); textObj.x = pos.x; textObj.y = pos.y; drawTextPreview(); return;
+            }
+            if (e.touches.length === 1 && isEditMode) {
+                isDraw = true; const p = getC(e); px = p.x; py = p.y; lx = p.x; ly = p.y;
+                tctx.beginPath(); tctx.moveTo(px, py);
+                executeToolAction(p.x, p.y, 'start');
+            } else if (e.touches.length === 1 && !isEditMode) {
+                isPan = true; sx = e.touches[0].clientX - app.panX; sy = e.touches[0].clientY - app.panY;
+            } else if (e.touches.length === 2) {
+                isPan = true; isDraw = false;
+                sx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - app.panX;
+                sy = (e.touches[0].clientY + e.touches[1].clientY) / 2 - app.panY;
+                dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchmove', e => {
+            if (e.touches.length === 1 && app.activeTool === 'TEXT_PLACE') {
+                const pos = getC(e); textObj.x = pos.x; textObj.y = pos.y; drawTextPreview(); return;
+            }
+            if (isDraw && isEditMode && e.touches.length === 1) {
+                const p = getC(e);
+                executeToolAction(p.x, p.y, 'move');
+            } else if (isPan && !isEditMode && e.touches.length === 1) {
+                app.panX = e.touches[0].clientX - sx; app.panY = e.touches[0].clientY - sy;
+                updateViewport();
+            } else if (isPan && e.touches.length === 2) {
+                const nx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                const ny = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                const ndist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                
+                if (dist > 0) {
+                    const scaleFactor = ndist / dist;
+                    app.scale *= scaleFactor; app.scale = Math.max(0.1, Math.min(app.scale, 20));
+                    app.panX = nx - sx * scaleFactor; app.panY = ny - sy * scaleFactor;
+                    sx = nx; sy = ny; dist = ndist;
+                    updateViewport();
+                    
+                    // CRITICAL CORRECTION: Notice what is missing? The clearRect command has been completely thrown out!
+                    // Your scratchpad sketches now remain perfectly safe on screen during your zooming/panning navigation loops.
+                }
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', e => {
+            if (isDraw) { executeToolAction(0, 0, 'end'); pushUndo('stroke'); }
+            isDraw = isPan = false; dist = 0;
+        });
+
+        // ==========================================
+        // CREATIVE & DESTRUCTIVE TOOL ENGINE
+        // ==========================================
+        function executeToolAction(x, y, stage) {
+            // Standard drawing tools write strictly onto the temporary scratchpad canvas
+            if (!app.activeTool) {
+                if (stage === 'start') { tctx.beginPath(); tctx.moveTo(x, y); }
+                if (stage === 'move') {
+                    tctx.lineWidth = app.penSize; tctx.strokeStyle = app.penColor;
+                    tctx.shadowColor = app.penColor; tctx.shadowBlur = app.glow;
+                    // Quadratic curve logic for ultra-smooth strokes
+                    const cx = (x + lx) / 2; const cy = (y + ly) / 2;
+                    tctx.quadraticCurveTo(lx, ly, cx, cy); tctx.stroke();
+                    lx = x; ly = y;
+                }
+                return;
+            }
+
+            if (app.activeTool === 'ERASER') {
+                if (stage === 'move') {
+                    tctx.save(); tctx.globalCompositeOperation = 'destination-out';
+                    tctx.beginPath(); tctx.arc(x, y, app.penSize / 2, 0, Math.PI * 2); tctx.fill();
+                    tctx.restore();
+                }
+                return;
+            }
+
+            if (app.activeTool === 'FILL') {
+                if (stage === 'start') {
+                    tctx.fillStyle = app.penColor;
+                    tctx.shadowBlur = 0; // Solid fills don't run shadows
+                    tctx.fillRect(0, 0, temp.width, temp.height);
+                }
+                return;
+            }
+
+            if (app.activeTool === 'PICKER' && stage === 'start') {
+                const imgData = mctx.getImageData(x, y, 1, 1).data;
+                const pickedHex = "#" + ("000000" + ((imgData[0] << 16) | (imgData[1] << 8) | imgData[2]).toString(16)).slice(-6);
+                app.baseHex = pickedHex; $('native-color').value = pickedHex;
+                updateColorFromSliders(); return;
+            }
+
+            // Selection & Copy Vectors (Drawn directly with EDIT off, calculation runs when flipped)
+            if (app.activeTool === 'COPY' || app.activeTool === 'LASSO_BG') {
+                if (!isEditMode) { // Drawing selection boundary lines
+                    if (stage === 'start') { lassoPoints = [{x, y}]; tctx.clearRect(0, 0, temp.width, temp.height); }
+                    if (stage === 'move') {
+                        lassoPoints.push({x, y});
+                        tctx.lineWidth = 2; tctx.strokeStyle = '#00ffff'; tctx.setLineDash([4, 4]);
+                        tctx.beginPath(); tctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
+                        for(let i=1; i<lassoPoints.length; i++) tctx.lineTo(lassoPoints[i].x, lassoPoints[i].y);
+                        tctx.stroke(); tctx.setLineDash([]);
+                    }
+                } else if (isEditMode && stage === 'start') { // Executing the selection operation on tap inside edit mode
+                    if (lassoPoints.length < 3) return;
+                    
+                    if (app.activeTool === 'COPY') {
+                        tctx.clearRect(0, 0, temp.width, temp.height);
+                        tctx.save(); tctx.beginPath();
+                        tctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
+                        for(let i=1; i<lassoPoints.length; i++) tctx.lineTo(lassoPoints[i].x, lassoPoints[i].y);
+                        tctx.closePath(); tctx.clip();
+                        tctx.drawImage(main, 0, 0); tctx.restore();
+                        window.clipboardData = tctx.getImageData(0, 0, temp.width, temp.height);
+                    } else if (app.activeTool === 'LASSO_BG') {
+                        mctx.save(); mctx.beginPath();
+                        mctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
+                        for(let i=1; i<lassoPoints.length; i++) mctx.lineTo(lassoPoints[i].x, lassoPoints[i].y);
+                        mctx.closePath(); mctx.clip();
+                        
+                        // Invert background clearing
+                        const tempImg = new Image();
+                        tempImg.src = main.toDataURL();
+                        tempImg.onload = () => {
+                            mctx.clearRect(0, 0, main.width, main.height);
+                            mctx.drawImage(tempImg, 0, 0);
+                            mctx.restore();
+                        };
+                    }
+                    lassoPoints = []; tctx.clearRect(0, 0, temp.width, temp.height);
+                }
+            }
+            
+            if (app.activeTool === 'PASTE' && stage === 'start' && window.clipboardData) {
+                tctx.putImageData(window.clipboardData, 0, 0);
+            }
+        }
+
+        // ==========================================
+        // BACKTRACK UNDO BUFFER
+        // ==========================================
+        function pushUndo(actionType) {
+            if (app.undo.length > 10) app.undo.shift(); // Bound memory pool
+            app.undo.push({
+                main: main.toDataURL(),
+                temp: temp.toDataURL()
+            });
+        }
+
+        function performUndo() {
+            if (app.undo.length < 2) return;
+            app.undo.pop(); // Toss current state
+            const prevState = app.undo[app.undo.length - 1];
+            
+            const mImg = new Image(); mImg.src = prevState.main;
+            mImg.onload = () => mctx.drawImage(mImg, 0, 0);
+            
+            const tImg = new Image(); tImg.src = prevState.temp;
+            tImg.onload = () => tctx.drawImage(tImg, 0, 0);
+        }
+
+        function triggerAI() {
+            // Placeholder hooks for layout integration
+            console.log('AI Layer Hook Activated');
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
